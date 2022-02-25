@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
-const schedule = require('node-schedule');
+// const schedule = require('node-schedule');
+const userAgent = require('user-agents');
 require('dotenv').config()
 
 // const rule = new schedule.RecurrenceRule();
@@ -15,15 +16,18 @@ require('dotenv').config()
 
 async function main(variant) {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         ...variant
     });
 
     const page = await browser.newPage();
-    await page.setUserAgent('5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36');
+    // await page.setUserAgent('5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36');
+
+    //Решить проблему с капчёй, когда запускаем браузер в режиме headless. возможно поможет настройка UserAgent
+    await page.setUserAgent(userAgent.toString())
     await page.setViewport({ width: 1920, height: 1080 })
 
-    await page.goto('https://www.strava.com/dashboard/following/180', {waitUntil: 'load', timeout: 10000});
+    await page.goto('https://www.strava.com/dashboard/following/220', {waitUntil: 'load', timeout: 10000});
 
     await page.type('#email', process.env.STRAVA_LOGIN);
     await page.type('#password', process.env.STRAVA_PASSWORD);
@@ -42,8 +46,21 @@ async function main(variant) {
             console.log('Успешный лайбон для первых тренировок 💪')
         })
 
+        const arrButtons = document.querySelectorAll('button')
+        arrButtons.forEach(el => {
+            if(el.innerText === 'Принять участие в задаче') {
+                el.click()
+                console.log('Успешно принята задача 💪')
+            }
+
+        })
+
     })
+
+    await page.screenshot({ path: 'result.png'})
+
     await browser.close()
-    console.log('closed')
+
+    await process.exit()
 }
 main()
